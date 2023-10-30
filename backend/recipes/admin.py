@@ -5,6 +5,7 @@ from recipes.models import (Favorite, Ingredient, IngredientRecipe,
 
 class TagRecipeInline(admin.TabularInline):
     """Вложенная форма для связи Тег - Рецепт."""
+
     model = TagRecipe
     min_num = 1
     extra = 5
@@ -14,6 +15,7 @@ class TagRecipeInline(admin.TabularInline):
 
 class IngredientRecipeInline(admin.TabularInline):
     """Вложенная форма для связи Ингредиент - Рецепт."""
+
     model = IngredientRecipe
     min_num = 1
     extra = 5
@@ -24,6 +26,7 @@ class IngredientRecipeInline(admin.TabularInline):
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     """Ингредиенты в панели администратора."""
+
     list_display = ("name", "measurement_unit")
     list_filter = ("name",)
     empty_value_display = "-пусто-"
@@ -32,6 +35,7 @@ class IngredientAdmin(admin.ModelAdmin):
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     """Теги в панели администратора."""
+
     list_display = ("name", "color", "slug")
     list_filter = ("name",)
 
@@ -39,6 +43,7 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     """Рецепты в панели администратора."""
+
     list_display = ("name", "author", "add_to_favorite")
     list_filter = ("name", "author", "tags")
     inlines = (TagRecipeInline, IngredientRecipeInline)
@@ -51,5 +56,6 @@ class RecipeAdmin(admin.ModelAdmin):
 @admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     """Список покупок в панели администратора."""
+
     list_display = ("user", "recipe")
     list_filter = ("user",)

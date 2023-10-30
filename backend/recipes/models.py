@@ -6,6 +6,7 @@ from users.models import User
 
 class Ingredient(models.Model):
     """Модель для ингредиентов."""
+
     name = models.CharField(
         max_length=200,
         verbose_name="Ингредиент",)
@@ -24,6 +25,7 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     """Модель для тегов."""
+
     name = models.CharField(
         max_length=200,
         verbose_name="Тег",
@@ -48,6 +50,7 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     """Модель для рецептов."""
+
     name = models.CharField(
         max_length=200,
         verbose_name="Рецепт",)
@@ -87,6 +90,7 @@ class Recipe(models.Model):
 
 class TagRecipe(models.Model):
     """Модель для связи тегов и рецептов."""
+
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
@@ -106,6 +110,7 @@ class TagRecipe(models.Model):
 
 class IngredientRecipe(models.Model):
     """Модель для связи ингредиентов и рецептов."""
+
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
@@ -130,6 +135,7 @@ class IngredientRecipe(models.Model):
 
 class Favorite(models.Model):
     """Модель для добавления в избранное."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -153,6 +159,7 @@ class Favorite(models.Model):
 
 class ShoppingCart(models.Model):
     """Модель для списка покупок."""
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -168,7 +175,4 @@ class ShoppingCart(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("user", "recipe"),
-                name="unique_shopping_cart"),]
-
-
-
+                name="unique_shopping_cart"), ]
