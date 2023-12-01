@@ -36,8 +36,8 @@ class RecipeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_class(self):
         method = self.request.method
         if method == "POST" or method == "PATCH":
-            return RecipeSerializer
-        return RecipeCreateSerializer
+            return RecipeCreateSerializer
+        return RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -83,11 +83,10 @@ class RecipeViewSet(viewsets.ReadOnlyModelViewSet):
         ...
 
 
-
-
-
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет для тегов."""
 
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
+    permission_classes = (IsAdminOrReadOnly, )

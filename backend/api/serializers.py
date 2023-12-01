@@ -56,6 +56,7 @@ class IngredientRecipeSerializer(ModelSerializer):
     id = ReadOnlyField(source="ingredient.id")
     name = ReadOnlyField(source="ingredient.name")
     measurement_unit = ReadOnlyField(source="ingredient.measurement_unit")
+    amount = ReadOnlyField()
 
     class Meta:
         model = IngredientRecipe
@@ -90,6 +91,10 @@ class RecipeSerializer(ModelSerializer):
             return False
         return ShoppingCart.objects.filter(
             user=user, recipe=obj).exists()
+
+    def get_ingredients(self, obj):
+        ingredients = IngredientRecipeSerializer.objects.filter(recipe=obj)
+        return IngredientRecipeSerializer(ingredients, many=True).data
 
 
 class RecipeCreateSerializer(RecipeSerializer):

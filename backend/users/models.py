@@ -29,7 +29,7 @@ class User(AbstractUser):
         default="example@mail.com",)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name", ]
+    REQUIRED_FIELDS = ["username", "first_name", "last_name", ]
 
     class Meta:
         ordering = ['username', ]

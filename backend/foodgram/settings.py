@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -71,8 +75,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'postgres_db'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
@@ -113,10 +121,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = '/backend_static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-MEDIA_URL = '/backend_media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
@@ -144,7 +152,7 @@ DJOSER = {
     "SERIALIZERS": {
         "user": "api.serializers.CustomUserSerializer",
         "user_create": "api.serializers.CreateUserSerializer",
-        "current_user": "api.serializers.CustomUserSerializer",},
+        "current_user": "api.serializers.CustomUserSerializer", },
     "PERMISSIONS": {
-        "user": ["api.permissions.IsAdminOrAuthor",],
-        "user_list": ["api.permissions.IsAdminOrAuthor",],}}
+        "user": ["api.permissions.IsAdminOrAuthor", ],
+        "user_list": ["api.permissions.IsAdminOrAuthor", ], }}
