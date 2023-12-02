@@ -1,16 +1,6 @@
 from django.contrib import admin
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
-                            Recipe, ShoppingCart, Tag, TagRecipe)
-
-
-class TagRecipeInline(admin.TabularInline):
-    """Вложенная форма для связи Тег - Рецепт."""
-
-    model = TagRecipe
-    min_num = 1
-    extra = 5
-    verbose_name = "Тег"
-    verbose_name_plural = "Теги"
+                            Recipe, ShoppingCart, Tag)
 
 
 class IngredientRecipeInline(admin.TabularInline):
@@ -46,7 +36,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     list_display = ("name", "author", "add_to_favorite")
     list_filter = ("name", "author", "tags")
-    inlines = (TagRecipeInline, IngredientRecipeInline)
+    inlines = [IngredientRecipeInline]
 
     @admin.display(description="Счетчик добавлений в избранное")
     def add_to_favorite(self, obj):

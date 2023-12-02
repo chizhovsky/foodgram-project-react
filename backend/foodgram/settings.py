@@ -140,19 +140,16 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ],
-    'DEFAULT_PAGINATION_CLASS':
-        'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 6
+    ]
 }
 
 DJOSER = {
-    "LOGIN_FIELD": "email",
-    "HIDE_USERS": False,
-    "SERIALIZERS": {
-        "user": "api.serializers.CustomUserSerializer",
-        "user_create": "api.serializers.CreateUserSerializer",
-        "current_user": "api.serializers.CustomUserSerializer", },
-    "PERMISSIONS": {
-        "user": ["api.permissions.IsAdminOrAuthor", ],
-        "user_list": ["api.permissions.IsAdminOrAuthor", ], }}
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    'SERIALIZERS': {
+        'user': 'api.serializers.CustomUserSerializer',
+        'user_create': 'api.serializers.CreateUserSerializer',
+        'current_user': 'api.serializers.CustomUserSerializer', },
+    'PERMISSIONS': {
+        'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly', ],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly', ], }}

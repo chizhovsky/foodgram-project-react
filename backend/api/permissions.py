@@ -6,14 +6,12 @@ class IsAdminOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
         return (request.method in SAFE_METHODS
-                or request.user
-                and request.user.is_superuser)
+                or request.user.is_superuser)
 
 
-class IsAdminOrAuthor(BasePermission):
-    """Права доступа для администратора и автора поста."""
+class IsAuthorOrReadOnly(BasePermission):
+    """Права доступа для автора поста или только чтение."""
 
     def has_object_permission(self, request, view, obj):
         return (request.method in SAFE_METHODS
-                or request.user == obj.author
-                or request.user.is_superuser)
+                or request.user == obj.author)

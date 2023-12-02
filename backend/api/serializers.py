@@ -1,6 +1,9 @@
+from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.serializers import (IntegerField, ModelSerializer,
+                                        PrimaryKeyRelatedField,
                                         ReadOnlyField, SerializerMethodField)
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
@@ -39,7 +42,8 @@ class IngredientSerializer(ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = "__all__"
+        fields = ("id", "name", "measurement_unit",)
+        read_only_fields = ("id", "name", "measurement_unit",)
 
 
 class TagSerializer(ModelSerializer):
@@ -47,7 +51,7 @@ class TagSerializer(ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ("id", "name", "color", "slug")
+        fields = "__all__"
 
 
 class IngredientRecipeSerializer(ModelSerializer):
@@ -68,7 +72,11 @@ class RecipeSerializer(ModelSerializer):
 
     author = CustomUserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    ingredients = IngredientRecipeSerializer(many=True, read_only=True)
+    ingredients = IngredientRecipeSerializer(
+        many=True,
+        read_only=True,
+        source="ingredientrecipe")
+    image = Base64ImageField(required=True)
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
 
@@ -93,60 +101,62 @@ class RecipeSerializer(ModelSerializer):
             user=user, recipe=obj).exists()
 
     def get_ingredients(self, obj):
-        ingredients = IngredientRecipeSerializer.objects.filter(recipe=obj)
+        ingredients = IngredientRecipe.objects.filter(recipe=obj)
         return IngredientRecipeSerializer(ingredients, many=True).data
-
-
-class RecipeCreateSerializer(RecipeSerializer):
-    """Сериализатор для создания и удаления рецептов."""
-
-    image = Base64ImageField()
-    cooking_time = IntegerField()
-
-    class Meta:
-        model = Recipe
-    fields = ("id", "name", "tags", "ingredients",
-              "author", "image", "text", "cooking_time", )
 
     def create_ingredients(self, ingredients, recipe):
         """Функция для добавления ингредиентов."""
 
         IngredientRecipe.objects.bulk_create([
             IngredientRecipe(
-                ingredient=ingredient["id"],
+                ingredient_id=ingredient.get("id"),
                 recipe=recipe,
-                amount=ingredient["amount"],) for ingredient in ingredients])
+                amount=ingredient["amount"], ) for ingredient in ingredients])
+
+    def validate(self, data):
+        """Функция для валидации данных."""
+
+        user = self.context.get("request").user
+        name = data["name"]
+        ingredients = self.initial_data["ingredients"]
+        if name == "":
+            raise ValidationError("Название рецепта не должно быть пустым!")
+        if self.context.get("request").method == "POST" and Recipe.objects.filter(
+                author=user, name=name).exists():
+            raise ValidationError("Рецепт с таким названием уже существует!")
+        if not ingredients:
+            raise ValidationError("Добавьте как минимум один ингредиент!")
+        ingredients_amount = []
+        for i in ingredients:
+            ingredient = get_object_or_404(Ingredient, id=i["id"])
+            if ingredient in ingredients_amount:
+                raise ValidationError("Нельзя добавлять одинаковые ингредиенты!")
+            ingredients_amount.append(ingredient)
+        data["ingredients"] = ingredients
+        tags = self.initial_data["tags"]
+        if not tags:
+            raise ValidationError("Выберите хотя бы один тег!")
+        return data
 
     def create(self, validated_data):
         """Функция для создания рецепта."""
 
         ingredients = validated_data.pop("ingredients")
-        tags = validated_data.pop("tags")
+        tags = self.initial_data.get("tags")
         recipe = Recipe.objects.create(**validated_data)
-        self.create_ingredients(ingredients, recipe)
         recipe.tags.set(tags)
+        self.create_ingredients(ingredients, recipe)
         return recipe
 
     def update(self, recipe, validated_data):
         """Функция для обновления рецепта."""
 
+        recipe.tags.clear()
+        recipe.tags.set(self.initial_data.get("tags"))
+        IngredientRecipe.objects.filter(recipe=recipe).all().delete()
         ingredients = validated_data.pop("ingredients")
-        tags = validated_data.pop("tags")
-        ingredients_recipe = IngredientRecipe.objects.filter(recipe=recipe)
-        ingredients_recipe.delete()
-        self.create_ingredients(recipe, ingredients)
-        recipe.tags.set(tags)
+        self.create_ingredients(ingredients, recipe)
         return super().update(recipe, validated_data)
-
-    def to_representation(self, instance):
-        """Функция для отображения рецепта."""
-
-        return RecipeSerializer(instance, context={
-            "request": self.context.get("request")}).data
-
-    def validate(self):
-        """Функция для валидации данных."""
-        ...
 
 
 class RecipeFollowSerializer(ModelSerializer):
