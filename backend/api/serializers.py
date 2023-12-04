@@ -2,8 +2,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.serializers import (IntegerField, ModelSerializer,
-                                        PrimaryKeyRelatedField,
+from rest_framework.serializers import (ModelSerializer,
                                         ReadOnlyField, SerializerMethodField)
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
@@ -22,10 +21,10 @@ class CustomUserSerializer(UserSerializer):
                   "last_name", "email", "is_subscribed", )
 
     def get_is_subscribed(self, obj):
-        return(
+        return (
             self.context["request"].user.is_authenticated
             and Follow.objects.filter(
-            user=self.context["request"].user, author=obj).exists())
+                user=self.context["request"].user, author=obj).exists())
 
 
 class CreateUserSerializer(UserCreateSerializer):
@@ -121,8 +120,9 @@ class RecipeSerializer(ModelSerializer):
         ingredients = self.initial_data["ingredients"]
         if name == "":
             raise ValidationError("Название рецепта не должно быть пустым!")
-        if self.context.get("request").method == "POST" and Recipe.objects.filter(
-                author=user, name=name).exists():
+        if (self.context.get("request").method == "POST"
+                and Recipe.objects.filter(
+                author=user, name=name).exists()):
             raise ValidationError("Рецепт с таким названием уже существует!")
         if not ingredients:
             raise ValidationError("Добавьте как минимум один ингредиент!")
@@ -130,7 +130,8 @@ class RecipeSerializer(ModelSerializer):
         for i in ingredients:
             ingredient = get_object_or_404(Ingredient, id=i["id"])
             if ingredient in ingredients_amount:
-                raise ValidationError("Нельзя добавлять одинаковые ингредиенты!")
+                raise ValidationError(
+                    "Нельзя добавлять одинаковые ингредиенты!")
             ingredients_amount.append(ingredient)
         data["ingredients"] = ingredients
         tags = self.initial_data["tags"]
@@ -159,33 +160,46 @@ class RecipeSerializer(ModelSerializer):
         return super().update(recipe, validated_data)
 
 
-class RecipeFollowSerializer(ModelSerializer):
-    """Сериализатор для добавления рецепта в избранное."""
+class CustomRecipeSerializer(ModelSerializer):
+    """Кастомный сериализатор модели рецептов для
+    отображения в подписках и избранном."""
+
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = ("id", "name", "image", "text", "cooking_time")
+        fields = (
+            "id",
+            "name",
+            "image",
+            "cooking_time",
+        )
+        read_only_fields = ("id", "name", "image", "cooking_time")
 
 
 class FollowSerializer(ModelSerializer):
     """Сериализатор для подписок."""
 
-    email = ReadOnlyField(source="author.email")
-    id = ReadOnlyField(source="author.id")
-    username = ReadOnlyField(source="author.username")
-    first_name = ReadOnlyField(source="author.first_name")
-    last_name = ReadOnlyField(source="author.last_name")
-    recipes = SerializerMethodField()
-    recipes_count = SerializerMethodField(read_only=True)
     is_subscribed = SerializerMethodField()
+    recipes = SerializerMethodField()
+    recipes_count = SerializerMethodField()
 
-    class Meta:
-        model = Follow
+    class Meta(UserSerializer.Meta):
         fields = ("email", "id", "username", "first_name",
-                  "last_name", "recipes", "recipes_count", "is_subscribed", )
-
-    def get_recipes(self, obj):
-        return Recipe.objects.filter(author=obj.author).count()
+                  "last_name", "recipes", "recipes_count", "is_subscribed",)
 
     def get_is_subscribed(self, obj):
-        return obj.author.follower.filter(user=obj.user).exists()
+        user = self.context["request"].user
+        return Follow.objects.filter(
+            user=user, author=obj).exists()
+
+    def get_recipes(self, obj):
+        request = self.context.get("request")
+        limit = request.GET.get("recipes_limit")
+        recipes = Recipe.objects.filter(author=obj)
+        if limit and limit.isdigit():
+            recipes = recipes[:int(limit)]
+        return CustomRecipeSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.all().count()

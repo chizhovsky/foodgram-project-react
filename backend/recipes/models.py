@@ -15,7 +15,7 @@ class Ingredient(models.Model):
         verbose_name="Единица измерения")
 
     class Meta:
-        ordering = ["name",]
+        ordering = ["name", ]
         verbose_name = "Ингредиент"
         verbose_name_plural = "Ингредиенты"
 
@@ -63,6 +63,7 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         verbose_name="Автор",
+        related_name="recipes",
         on_delete=models.CASCADE,)
     image = models.ImageField(
         verbose_name="Изображение",
@@ -71,8 +72,8 @@ class Recipe(models.Model):
         verbose_name="Описание")
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name="Время приготовления",
-        validators=[MinValueValidator(1,
-            message="Время приготовления не должно быть меньше одной минуты.")])
+        validators=[MinValueValidator(
+            1, message="Время должно быть не меньше одной минуты.")])
 
     class Meta:
         ordering = ['-id']
@@ -97,8 +98,8 @@ class IngredientRecipe(models.Model):
         verbose_name="Рецепт",)
     amount = models.PositiveSmallIntegerField(
         verbose_name="Количество",
-        validators=[MinValueValidator(1,
-            message="Количество ингредиентов должно быть не меньше одного.")])
+        validators=[MinValueValidator(
+            1, message="Количество ингредиентов должно быть больше одного.")])
 
     class Meta:
         verbose_name = "Ингредиент в рецепте"
@@ -106,7 +107,7 @@ class IngredientRecipe(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("recipe", "ingredient"),
-                name="unique_ingredient_recipe"),]
+                name="unique_ingredient_recipe"), ]
 
 
 class Favorite(models.Model):
@@ -138,10 +139,12 @@ class ShoppingCart(models.Model):
 
     user = models.ForeignKey(
         User,
+        related_name='shoppingcart',
         on_delete=models.CASCADE,
         verbose_name="Пользователь")
     recipe = models.ForeignKey(
         Recipe,
+        related_name='shoppingcart',
         on_delete=models.CASCADE,
         verbose_name="Рецепт",)
 

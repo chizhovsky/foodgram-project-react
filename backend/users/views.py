@@ -20,36 +20,49 @@ class CustomUserViewSet(UserViewSet):
     permission_classes = (IsAuthenticated, )
 
     def get_serializer_class(self):
-        if self.action == "create":
+        method = self.request.method
+        if method == "POST" or "PUT" or "PATCH":
             return CreateUserSerializer
-        if self.action == "subscribe":
-            return FollowSerializer
         return CustomUserSerializer
 
     @action(detail=False, methods=["GET"],
             permission_classes=[IsAuthenticated], )
     def me(self, request):
-        serializer = CustomUserSerializer(request.user, context={"request": request})
+        serializer = self.get_serializer(self.request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, permission_classes=[IsAuthenticated], )
+    @action(detail=False, methods=["GET"],
+            permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        queryset = Follow.objects.filter(user=request.user)
-        pages = self.paginate_queryset(queryset)
+        follows = self.paginate_queryset(
+            User.objects.filter(following__user=request.user))
         serializer = FollowSerializer(
-            pages, many=True,)
+            follows, many=True,
+            context={"request": request})
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=["POST", "DELETE"],
             permission_classes=[IsAuthenticated], )
-    def subscribe(self, request, id=None):
-        author = get_object_or_404(User, pk=id)
+    def subscribe(self, request, *args, **kwargs):
+        user = get_object_or_404(User, username=request.user)
+        author = get_object_or_404(User, id=self.kwargs.get('id'))
+        follow_exists = Follow.objects.filter(
+            author=author, user=user).exists()
         if request.method == "POST":
+            if follow_exists:
+                return Response(
+                    {"errors": "Нельзя 2 раза подписаться на одного автора!"},
+                    status=status.HTTP_400_BAD_REQUEST)
+            if user == author:
+                return Response(
+                    {"errors": "Нельзя подписаться на самого себя!"},
+                    status=status.HTTP_400_BAD_REQUEST)
             serializer = FollowSerializer(
-                Follow.objects.create(user=request.user, author=author),
-                context={"request": request}, )
+                author, data=request.data, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+            Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
             Follow.objects.filter(
-                user=request.user, author=author).delete()
+                user=user, author=author).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -51,17 +52,21 @@ class Follow(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор',
-        related_name="author",)
+        verbose_name="Автор",
+        related_name="following",)
 
     class Meta:
-        ordering = ['user',]
+        ordering = ["user", ]
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
         constraints = [
             models.UniqueConstraint(
                 fields=("user", "author"),
                 name="unique_follow"), ]
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError("Невозможно подписаться на самого себя!")
 
     def __str__(self):
         return f"{self.user} подписан на {self.author}"
