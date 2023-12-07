@@ -54,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({
             "errors": "Можно использовать только методы Post и Delete"},
-                        status=status.HTTP_400_BAD_REQUEST)
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["POST", "DELETE"],
             permission_classes=[IsAuthenticated])
@@ -71,7 +71,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({
             "errors": "Можно использовать только методы Post и Delete"},
-                        status=status.HTTP_400_BAD_REQUEST)
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=["GET"],
             permission_classes=[IsAuthenticated])
