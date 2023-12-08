@@ -18,8 +18,8 @@ class UserAdmin(admin.ModelAdmin):
         "recipes_count",)
     list_filter = ("username", "email",)
 
-    get_followers_count.short_description = "Подписчики"
-    get_recipes_count.short_description = "Рецепты"
+    followers_count.short_description = "Подписчики"
+    recipes_count.short_description = "Рецепты"
 
     def followers_count(self, obj):
         return obj.follower.count()

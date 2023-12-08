@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.serializers import (IntegerField, ModelSerializer,
@@ -128,7 +127,7 @@ class RecipeSerializer(ModelSerializer):
         if not ingredients:
             raise ValidationError("Добавьте как минимум один ингредиент!")
         ingredient_id = [ingredient["id"] for ingredient in ingredients]
-        unique_ingredient_id = set(ingredients_id)
+        unique_ingredient_id = set(ingredient_id)
         if len(ingredient_id) != len(unique_ingredient_id):
             raise ValidationError(
                 "Нельзя добавлять одинаковые ингредиенты!")
