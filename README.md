@@ -7,7 +7,7 @@ Foodgram - это сервис для публикации рецептов. П�
 Можно добавить любимый рецепт (например, вареное яичко) в избранное. Есть возможность добавлять рецепты в корзину. 
 А затем этот список для покупок скачать.
 
-Почта для входа в панель администратора: admin@gmail.com  
+Почта для входа в панель администратора: admin@mail.com  
 Пароль: Aa0000
 
 ## Технологии
@@ -20,19 +20,19 @@ Foodgram - это сервис для публикации рецептов. П�
 - PostgreSQL
 
 ## Установка
-1. Склонируйте репозиторий.
+Склонируйте репозиторий.
 ```
 git clone git@github.com:chizhovsky/foodgram-project-react.git
 ```
 <br>
 
-2. Скомпилируйте проект, используя docker.
+Скомпилируйте проект, используя docker.
 ```
 docker compose up -d
 ```
 <br>
 
-3. Выполните миграции, соберите статику.
+Выполните миграции, соберите статику.
 ```
 docker compose exec infra-backend-1 python3 manage.py migrate
 docker compose exec infra-backend-1 python3 manage.py collectstatic
@@ -46,11 +46,11 @@ docker compose exec infra-backend-1 cp -r app/static/. ../static/
 POST http://localhost/api/users/
 
 {
-  "email": "vpupkin@yandex.ru",
-  "username": "vasya.pupkin",
-  "first_name": "Вася",
-  "last_name": "Пупкин",
-  "password": "Qwerty123"
+  "email": "peter-parker@mail.com",
+  "username": "peter-parker",
+  "first_name": "Peter",
+  "last_name": "Parker",
+  "password": "spider-man123"
 }
 ```
 
@@ -61,18 +61,18 @@ POST http://localhost/api/recipes/
 {
   "ingredients": [
     {
-      "id": 1123,
-      "amount": 10
+      "id": 233,
+      "amount": 8
     }
   ],
   "tags": [
-    1,
-    2
+    breakfast,
+    lunch
   ],
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==",
-  "name": "string",
-  "text": "string",
-  "cooking_time": 1
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAHhbjinfjjbiAAABieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKdgggdUbkHoAAAAggCByxOyYQAAAABJRU5ErkJggg",
+  "name": "Вареное яйцо",
+  "text": "Сварите в воде! ",
+  "cooking_time": 7
 }
 ```
 
