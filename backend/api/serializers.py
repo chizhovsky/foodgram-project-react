@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.serializers import (ModelSerializer,
+from rest_framework.serializers import (IntegerField, ModelSerializer,
                                         ReadOnlyField, SerializerMethodField)
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
@@ -76,6 +76,7 @@ class RecipeSerializer(ModelSerializer):
         read_only=True,
         source="ingredientrecipe")
     image = Base64ImageField(required=True)
+    cooking_time = IntegerField(required=True)
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
 
@@ -126,13 +127,11 @@ class RecipeSerializer(ModelSerializer):
             raise ValidationError("Рецепт с таким названием уже существует!")
         if not ingredients:
             raise ValidationError("Добавьте как минимум один ингредиент!")
-        ingredients_amount = []
-        for i in ingredients:
-            ingredient = get_object_or_404(Ingredient, id=i["id"])
-            if ingredient in ingredients_amount:
-                raise ValidationError(
-                    "Нельзя добавлять одинаковые ингредиенты!")
-            ingredients_amount.append(ingredient)
+        ingredient_id = [ingredient["id"] for ingredient in ingredients]
+        unique_ingredient_id = set(ingredients_id)
+        if len(ingredient_id) != len(unique_ingredient_id):
+            raise ValidationError(
+                "Нельзя добавлять одинаковые ингредиенты!")
         data["ingredients"] = ingredients
         tags = self.initial_data["tags"]
         if not tags:
@@ -152,7 +151,6 @@ class RecipeSerializer(ModelSerializer):
     def update(self, recipe, validated_data):
         """Функция для обновления рецепта."""
 
-        recipe.tags.clear()
         recipe.tags.set(self.initial_data.get("tags"))
         IngredientRecipe.objects.filter(recipe=recipe).all().delete()
         ingredients = validated_data.pop("ingredients")
@@ -202,4 +200,4 @@ class FollowSerializer(ModelSerializer):
         return CustomRecipeSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
-        return obj.recipes.all().count()
+        return obj.recipes.count()

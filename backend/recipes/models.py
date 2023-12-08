@@ -29,7 +29,7 @@ class Tag(models.Model):
     name = models.CharField(
         max_length=200,
         verbose_name="Тег",)
-    color = models.CharField(
+    color = models.ColorField(
         max_length=7,
         null=True,
         blank=True,
