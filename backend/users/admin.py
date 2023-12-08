@@ -18,14 +18,14 @@ class UserAdmin(admin.ModelAdmin):
         "recipes_count",)
     list_filter = ("username", "email",)
 
-    followers_count.short_description = "Подписчики"
-    recipes_count.short_description = "Рецепты"
-
     def followers_count(self, obj):
         return obj.follower.count()
 
     def recipes_count(self, obj):
         return obj.recipes.count()
+
+    followers_count.short_description = "Подписчики"
+    recipes_count.short_description = "Рецепты"
 
 
 @admin.register(Follow)
