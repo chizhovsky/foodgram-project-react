@@ -46,8 +46,9 @@ class CustomUserViewSet(UserViewSet):
     def subscribe(self, request, *args, **kwargs):
         user = get_object_or_404(User, username=request.user)
         author = get_object_or_404(User, id=self.kwargs.get('id'))
-        follow_exists = Follow.objects.filter(
-            author=author, user=user).exists()
+        follow_queryset = Follow.objects.filter(
+            author=author, user=user)
+        follow_exists = follow_queryset.exists()
         if request.method == "POST":
             if follow_exists:
                 return Response(
@@ -63,6 +64,5 @@ class CustomUserViewSet(UserViewSet):
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            Follow.objects.filter(
-                user=user, author=author).delete()
+            follow_queryset.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
                             Recipe, ShoppingCart, Tag)
@@ -27,8 +28,16 @@ class IngredientAdmin(admin.ModelAdmin):
 class TagAdmin(admin.ModelAdmin):
     """Теги в панели администратора."""
 
-    list_display = ("name", "color", "slug")
+    list_display = ("name", "colored", "slug")
     list_filter = ("name",)
+
+    @admin.display
+    def colored(self, obj):
+        return format_html(
+            f'<span style="background: {obj.color};'
+            f'color: {obj.color}";>___________</span>')
+
+    colored.short_description = "цвет"
 
 
 @admin.register(Recipe)
