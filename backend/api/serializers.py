@@ -115,19 +115,26 @@ class RecipeSerializer(ModelSerializer):
                 recipe=recipe,
                 amount=ingredient["amount"], ) for ingredient in ingredients])
 
-    def validate(self, data):
-        """Функция для валидации данных."""
+    def validate_tags(self, data):
+        """Функция для валидации тегов."""
 
-        user = self.context.get("request").user
-        name = data["name"]
+        tags = self.initial_data.get("tags")
+        if tags is not None:
+            nonexistent_tags = set(tags) - set(
+                Tag.objects.values_list("id", flat=True))
+            if nonexistent_tags:
+                raise ValidationError(
+                    f"Id {nonexistent_tags} отсуствует!")
+            if len(tags) != len(set(tags)):
+                raise ValidationError("Теги не должны повторяться!")
+        if not tags:
+            raise ValidationError("Добавьте хотя бы один тег!")
+        return data
+
+    def validate_ingredients(self, data):
+        """Функция для валидации ингредиентов."""
+
         ingredients = self.initial_data.get("ingredients")
-        if name == "":
-            raise ValidationError("Название рецепта не должно быть пустым!")
-        if (self.context.get("request").method == "POST"
-                and Recipe.objects.filter(
-                author=user, name=name).exists()):
-            raise ValidationError("Рецепт с таким названием уже существует!")
-
         if not ingredients:
             raise ValidationError("Добавьте как минимум один ингредиент!")
         for ingredient in ingredients:
@@ -144,28 +151,29 @@ class RecipeSerializer(ModelSerializer):
         if len(ingredient_id) != len(unique_ingredient_id):
             raise ValidationError(
                 "Нельзя добавлять одинаковые ингредиенты!")
-
         data["ingredients"] = ingredients
-        tags = self.initial_data.get("tags")
-        if tags is not None:
-            nonexistent_tags = set(tags) - set(
-                Tag.objects.values_list("id", flat=True))
-            if nonexistent_tags:
-                raise ValidationError(
-                    f"Id {nonexistent_tags} отсуствует!")
-            if len(tags) != len(set(tags)):
-                raise ValidationError("Теги не должны повторяться!")
-        if not tags:
-            raise ValidationError("Добавьте хотя бы один тег!")
+        return data
 
+    def validate(self, data):
+        """Функция для валидации данных."""
+
+        user = self.context.get("request").user
+        name = data["name"]
+        if name == "":
+            raise ValidationError("Название рецепта не должно быть пустым!")
+        if (self.context.get("request").method == "POST"
+                and Recipe.objects.filter(
+                author=user, name=name).exists()):
+            raise ValidationError("Рецепт с таким названием уже существует!")
         image = self.initial_data.get("image")
         if not image:
             raise ValidationError("Добавьте изображение!")
-
         cooking_time = self.initial_data.get("cooking_time")
         if int(cooking_time) < 1:
             raise ValidationError(
                 "Время приготовления не может быть 0 минут!")
+        data = self.validate_tags(data)
+        data = self.validate_ingredients(data)
         return data
 
     def create(self, validated_data):
