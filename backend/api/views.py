@@ -44,7 +44,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        if request.method == "POST":
+        user = self.request.user
+        favorite = Favorite.objects.filter(recipe=recipe, user=user)
+        if request.method == "POST" and not favorite.exists():
             serializer = CustomRecipeSerializer(recipe)
             Favorite.objects.create(user=request.user, recipe=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -61,7 +63,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        if request.method == "POST":
+        user = self.request.user
+        shopping_cart = user.shoppingcart.filter(recipe=recipe)
+        if request.method == "POST" and not shopping_cart.exists():
             serializer = CustomRecipeSerializer(recipe)
             ShoppingCart.objects.create(user=request.user, recipe=recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

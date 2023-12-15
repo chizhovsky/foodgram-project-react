@@ -1,7 +1,8 @@
 from django.core.exceptions import ValidationError
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.serializers import (IntegerField, ModelSerializer,
+from rest_framework.serializers import (CharField,
+                                        IntegerField, ModelSerializer,
                                         ReadOnlyField, SerializerMethodField)
 
 from recipes.models import (Favorite, Ingredient, IngredientRecipe,
@@ -28,6 +29,8 @@ class CustomUserSerializer(UserSerializer):
 
 class CreateUserSerializer(UserCreateSerializer):
     """Сериализатор для создания нового пользователя."""
+
+    username = CharField(max_length=150)
 
     class Meta:
         model = User
@@ -117,24 +120,52 @@ class RecipeSerializer(ModelSerializer):
 
         user = self.context.get("request").user
         name = data["name"]
-        ingredients = self.initial_data["ingredients"]
+        ingredients = self.initial_data.get("ingredients")
         if name == "":
             raise ValidationError("Название рецепта не должно быть пустым!")
         if (self.context.get("request").method == "POST"
                 and Recipe.objects.filter(
                 author=user, name=name).exists()):
             raise ValidationError("Рецепт с таким названием уже существует!")
+
         if not ingredients:
             raise ValidationError("Добавьте как минимум один ингредиент!")
+        for ingredient in ingredients:
+            if int(ingredient["amount"]) < 1:
+                raise ValidationError(
+                    "Нельзя взять ноль ингредиента!")
         ingredient_id = [ingredient["id"] for ingredient in ingredients]
+        nonexistent_ingredients = set(ingredient_id) - set(
+            Ingredient.objects.values_list("id", flat=True))
+        if nonexistent_ingredients:
+            raise ValidationError(
+                f"Id {nonexistent_ingredients} отсутствует!.")
         unique_ingredient_id = set(ingredient_id)
         if len(ingredient_id) != len(unique_ingredient_id):
             raise ValidationError(
                 "Нельзя добавлять одинаковые ингредиенты!")
+
         data["ingredients"] = ingredients
-        tags = self.initial_data["tags"]
+        tags = self.initial_data.get("tags")
+        if tags is not None:
+            nonexistent_tags = set(tags) - set(
+                Tag.objects.values_list("id", flat=True))
+            if nonexistent_tags:
+                raise ValidationError(
+                    f"Id {nonexistent_tags} отсуствует!")
+            if len(tags) != len(set(tags)):
+                raise ValidationError("Теги не должны повторяться!")
         if not tags:
-            raise ValidationError("Выберите хотя бы один тег!")
+            raise ValidationError("Добавьте хотя бы один тег!")
+
+        image = self.initial_data.get("image")
+        if not image:
+            raise ValidationError("Добавьте изображение!")
+
+        cooking_time = self.initial_data.get("cooking_time")
+        if int(cooking_time) < 1:
+            raise ValidationError(
+                "Время приготовления не может быть 0 минут!")
         return data
 
     def create(self, validated_data):

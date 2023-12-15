@@ -21,7 +21,7 @@ class CustomUserViewSet(UserViewSet):
 
     def get_serializer_class(self):
         method = self.request.method
-        if method == "POST" or "PUT" or "PATCH":
+        if method in ["POST", "PUT", "PATCH"]:
             return CreateUserSerializer
         return CustomUserSerializer
 
